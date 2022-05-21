@@ -83,10 +83,14 @@ export class Sqlite3Database implements Database {
                 notnull: 0 | 1
                 type: string
                 dflt_value: string | null
+                pk: 0 | 1
             }) => {
                 const columnName = schemaItem.name
                 let defaultValue = schemaItem.dflt_value
-                if (this.increments[tableName] === `"${schemaItem.name}"`) {
+                if (
+                    this.increments[tableName] === `"${schemaItem.name}"` ||
+                    this.increments[tableName] === `\`${schemaItem.name}\``
+                ) {
                     defaultValue = ':autoincrement:'
                 }
 
