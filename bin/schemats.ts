@@ -19,6 +19,7 @@ interface SchematsConfig {
     forInsert?: boolean
     sqlite3?: boolean
     skipTables?: string[] | string
+    skipPrefix?: string[] | string
     customTypes?: object
     customHeader?: string
     prettier?: boolean
@@ -61,6 +62,7 @@ let argv: SchematsConfig = yargs
     .describe('o', 'output file name')
     .describe('sqlite3', 'For sqlite3 dbs')
     .describe('skipTables', 'tables to skip')
+    .describe('skipPrefix', 'tables to skip by their prefix')
     .describe('customTypes', 'Mapping of custom types for a table column')
     .describe('customHeader', 'Custom header to prefix the output file')
     .help('h')
@@ -93,6 +95,10 @@ let argv: SchematsConfig = yargs
                     typeof argv.skipTables === 'string'
                         ? [argv.skipTables]
                         : argv.skipTables,
+                skipPrefix:
+                    typeof argv.skipPrefix === 'string'
+                        ? [argv.skipPrefix]
+                        : argv.skipPrefix,
             }
         )
         fs.writeFileSync(argv.output, formattedOutput)

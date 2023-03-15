@@ -24,6 +24,7 @@ export type OptionValues = {
     customTypes?: Record<string, any>
     customTypeTransform?: Record<string, any> // transform the native type to a ts type
     skipTables?: string[]
+    skipPrefix?: string[]
     // inlineEnum?: boolean // whether to create/export enum types
 }
 
