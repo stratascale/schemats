@@ -6,6 +6,8 @@ const DEFAULT_OPTIONS: OptionValues = {
     writeHeader: true,
     camelCase: false,
     tableNamespaces: false,
+    enumManifest: false,
+    tableManifest: true,
     forInsert: false,
     forInsertNull: false,
     // inlineEnum: false
@@ -18,7 +20,10 @@ export type OptionValues = {
     camelCase?: boolean
     writeHeader?: boolean // write schemats description header
     customHeader?: string
+    customFooter?: string
     tableNamespaces?: boolean // whether to namespace field types
+    tableManifest?: boolean | string // whether to include a lookup of all tables, if a string is provided, it's the name of the interface
+    enumManifest?: boolean | string // whether to include a lookup of all enums, if a string is provided, it's the name of the interface
     forInsert?: boolean // makes any columns with a "default" optional
     forInsertNull?: boolean // whether to require nullable columns without a default
     customTypes?: Record<string, any>

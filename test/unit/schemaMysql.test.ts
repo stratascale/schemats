@@ -47,13 +47,13 @@ describe('MysqlDatabase', () => {
                     cb: Function
                 ) {
                     cb('ERROR')
-                }
+                },
             })
             const testDb: any = new MysqlDatabase(
                 'mysql://user:password@localhost/test'
             )
             try {
-                testDb.query('SELECT * FROM test_table')
+                await testDb.query('SELECT * FROM test_table')
             } catch (e) {
                 assert.equal(e, 'ERROR')
             }
@@ -66,7 +66,7 @@ describe('MysqlDatabase', () => {
                     cb: Function
                 ) {
                     cb(null, [])
-                }
+                },
             })
             const testDb: any = new MysqlDatabase(
                 'mysql://user:password@localhost/test'
@@ -85,7 +85,7 @@ describe('MysqlDatabase', () => {
                     'SELECT column_name, column_type, data_type ' +
                         'FROM information_schema.columns ' +
                         "WHERE data_type IN ('enum', 'set') and table_schema = ?",
-                    ['testschema']
+                    ['testschema'],
                 ]
             )
         })
@@ -98,7 +98,7 @@ describe('MysqlDatabase', () => {
                     'SELECT column_name, column_type, data_type ' +
                         'FROM information_schema.columns ' +
                         "WHERE data_type IN ('enum', 'set') ",
-                    []
+                    [],
                 ]
             )
         })
@@ -108,19 +108,19 @@ describe('MysqlDatabase', () => {
                     {
                         column_name: 'column1',
                         column_type: "enum('enum1')",
-                        data_type: 'enum'
+                        data_type: 'enum',
                     },
                     {
                         column_name: 'column2',
                         column_type: "set('set1')",
-                        data_type: 'set'
-                    }
+                        data_type: 'set',
+                    },
                 ])
             )
             const enumTypes = await db.getEnumTypes('testschema')
             assert.deepEqual(enumTypes, {
                 enum_column1: ['enum1'],
-                set_column2: ['set1']
+                set_column2: ['set1'],
             })
         })
         it('same column same value is accepted', async () => {
@@ -129,18 +129,18 @@ describe('MysqlDatabase', () => {
                     {
                         column_name: 'column1',
                         column_type: "enum('enum1','enum2')",
-                        data_type: 'enum'
+                        data_type: 'enum',
                     },
                     {
                         column_name: 'column1',
                         column_type: "enum('enum1','enum2')",
-                        data_type: 'enum'
-                    }
+                        data_type: 'enum',
+                    },
                 ])
             )
             const enumTypes = await db.getEnumTypes('testschema')
             assert.deepEqual(enumTypes, {
-                enum_column1: ['enum1', 'enum2']
+                enum_column1: ['enum1', 'enum2'],
             })
         })
         it('same column different value conflict', async () => {
@@ -149,13 +149,13 @@ describe('MysqlDatabase', () => {
                     {
                         column_name: 'column1',
                         column_type: "enum('enum1')",
-                        data_type: 'enum'
+                        data_type: 'enum',
                     },
                     {
                         column_name: 'column1',
                         column_type: "enum('enum2')",
-                        data_type: 'enum'
-                    }
+                        data_type: 'enum',
+                    },
                 ])
             )
             try {
@@ -178,7 +178,7 @@ describe('MysqlDatabase', () => {
                     'SELECT column_name, data_type, is_nullable, column_default ' +
                         'FROM information_schema.columns ' +
                         'WHERE table_name = ? and table_schema = ?',
-                    ['testtable', 'testschema']
+                    ['testtable', 'testschema'],
                 ]
             )
         })
@@ -189,20 +189,20 @@ describe('MysqlDatabase', () => {
                         column_name: 'column1',
                         data_type: 'data1',
                         is_nullable: 'NO',
-                        column_default: null
+                        column_default: null,
                     },
                     {
                         column_name: 'column2',
                         data_type: 'enum',
                         is_nullable: 'YES',
-                        column_default: null
+                        column_default: null,
                     },
                     {
                         column_name: 'column3',
                         data_type: 'set',
                         is_nullable: 'YES',
-                        column_default: null
-                    }
+                        column_default: null,
+                    },
                 ])
             )
             const schemaTables = await db.getTableDefinition(
@@ -210,9 +210,21 @@ describe('MysqlDatabase', () => {
                 'testschema'
             )
             assert.deepEqual(schemaTables, {
-                column1: { udtName: 'data1', nullable: false, defaultValue: null },
-                column2: { udtName: 'enum_column2', nullable: true, defaultValue: null },
-                column3: { udtName: 'set_column3', nullable: true, defaultValue: null }
+                column1: {
+                    udtName: 'data1',
+                    nullable: false,
+                    defaultValue: null,
+                },
+                column2: {
+                    udtName: 'enum_column2',
+                    nullable: true,
+                    defaultValue: null,
+                },
+                column3: {
+                    udtName: 'set_column3',
+                    nullable: true,
+                    defaultValue: null,
+                },
             })
         })
     })
@@ -256,8 +268,8 @@ describe('MysqlDatabase', () => {
                 Promise.resolve({
                     table: {
                         udtName: 'name',
-                        nullable: false
-                    }
+                        nullable: false,
+                    },
                 })
             )
             await db.getTableTypes('tableName', 'tableSchema', options)
@@ -270,8 +282,8 @@ describe('MysqlDatabase', () => {
                 {
                     table: {
                         udtName: 'name',
-                        nullable: false
-                    }
+                        nullable: false,
+                    },
                 }
             )
         })
@@ -287,7 +299,7 @@ describe('MysqlDatabase', () => {
                         'FROM information_schema.columns ' +
                         'WHERE table_schema = ? ' +
                         'GROUP BY table_name',
-                    ['testschema']
+                    ['testschema'],
                 ]
             )
         })
@@ -295,7 +307,7 @@ describe('MysqlDatabase', () => {
             MysqlDBReflection.prototype.queryAsync.returns(
                 Promise.resolve([
                     { table_name: 'table1' },
-                    { table_name: 'table2' }
+                    { table_name: 'table2' },
                 ])
             )
             const schemaTables = await db.getSchemaTables('testschema')
@@ -309,8 +321,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'char',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -323,8 +335,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'varchar',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -337,8 +349,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'text',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -351,8 +363,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'tinytext',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -365,8 +377,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'mediumtext',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -379,8 +391,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'longtext',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -393,8 +405,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'time',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -407,8 +419,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'geometry',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -421,8 +433,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'set',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -435,8 +447,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'enum',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -451,8 +463,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'integer',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -465,8 +477,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'int',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -479,8 +491,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'smallint',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -493,8 +505,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'mediumint',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -507,8 +519,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'bigint',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -521,8 +533,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'double',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -535,8 +547,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'decimal',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -549,8 +561,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'numeric',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -563,8 +575,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'float',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -577,8 +589,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'year',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -593,8 +605,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'tinyint',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -609,8 +621,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'json',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -625,8 +637,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'date',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -639,8 +651,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'datetime',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -653,8 +665,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'timestamp',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -669,8 +681,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'tinyblob',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -683,8 +695,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'mediumblob',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -697,8 +709,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'longblob',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -711,8 +723,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'blob',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -725,8 +737,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'binary',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -739,8 +751,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'varbinary',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -753,8 +765,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'bit',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(td, [], options)
@@ -769,8 +781,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'CustomType',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(
@@ -788,8 +800,8 @@ describe('MysqlDatabase', () => {
                     column: {
                         udtName: 'UnknownType',
                         nullable: false,
-                        defaultValue: null
-                    }
+                        defaultValue: null,
+                    },
                 }
                 assert.equal(
                     MysqlDBReflection.mapTableDefinitionToType(

@@ -17,3 +17,7 @@ export interface Users {
     textColNullable?: string | null
     varcharCol?: string | null
 }
+
+export interface DBTables {
+    Users: Users
+}

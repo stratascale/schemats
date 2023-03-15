@@ -137,3 +137,7 @@ export interface Users {
     uuidColumn: UsersFields.uuidColumn
     varcharArrayCol: UsersFields.varcharArrayCol
 }
+
+export interface DBTables {
+    Users: Users
+}

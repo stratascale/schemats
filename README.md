@@ -8,6 +8,8 @@ Upstream fork of https://github.com/SweetIQ/schemats, with new features / option
 -   `customHeader`: allows adding a custom string header to the generated document
 -   `prettierConfig`: specify a path to prettier to auto-format the output
 -   `tableNamespaces`: whether to add extra namespaces for columns, default `false`
+-   `enumManifest`: whether to include a lookup of all enums, if a string is provided, the name of the interface
+-   `tableManifest`: whether to include a lookup of all tables, if a string is provided, it's the name of the interface
 
 ```
 yarn install @tgriesser/schemats

@@ -72,3 +72,7 @@ export interface Users {
     uuidColumn?: string | null
     varcharArrayCol?: Array<string> | null
 }
+
+export interface DBTables {
+    Users: Users
+}

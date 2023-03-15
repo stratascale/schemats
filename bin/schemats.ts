@@ -18,6 +18,8 @@ interface SchematsConfig {
     tableNamespaces?: boolean
     forInsert?: boolean
     sqlite3?: boolean
+    enumManifest?: boolean | string
+    tableManifest?: boolean | string
     skipTables?: string[] | string
     skipPrefix?: string[] | string
     customTypes?: object
@@ -65,6 +67,14 @@ let argv: SchematsConfig = yargs
     .describe('skipPrefix', 'tables to skip by their prefix')
     .describe('customTypes', 'Mapping of custom types for a table column')
     .describe('customHeader', 'Custom header to prefix the output file')
+    .describe(
+        'enumManifest',
+        'Whether to include a lookup of all enums, if a string is provided, the name of the interface'
+    )
+    .describe(
+        'tableManifest',
+        'Whether to include a lookup of all tables, if a string is provided, the name of the interface'
+    )
     .help('h')
     .alias('h', 'help').argv
 ;(async () => {
@@ -91,6 +101,14 @@ let argv: SchematsConfig = yargs
                 tableNamespaces: Boolean(argv.tableNamespaces),
                 forInsert: Boolean(argv.forInsert),
                 sqlite3: Boolean(argv.sqlite3),
+                enumManifest:
+                    typeof argv.enumManifest === 'string'
+                        ? argv.enumManifest
+                        : Boolean(argv.enumManifest ?? false),
+                tableManifest:
+                    typeof argv.tableManifest === 'string'
+                        ? argv.enumManifest
+                        : Boolean(argv.tableManifest ?? true),
                 skipTables:
                     typeof argv.skipTables === 'string'
                         ? [argv.skipTables]

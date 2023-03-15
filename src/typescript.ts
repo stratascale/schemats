@@ -43,7 +43,7 @@ export function generateTableInterface(
     let members = ''
     Object.keys(tableDefinition)
         .sort()
-        .forEach(c => {
+        .forEach((c) => {
             const d = tableDefinition[c]
             const columnName = options.transformColumnName(c)
             members += `${columnName}${colon(
@@ -68,7 +68,7 @@ export function generateTableInterfaceOnly(
     let members = ''
     Object.keys(tableDefinition)
         .sort()
-        .forEach(columnNameRaw => {
+        .forEach((columnNameRaw) => {
             const def = tableDefinition[columnNameRaw]
             const type = def.tsType
             const nullable = def.nullable && !def.tsCustomType ? '| null' : ''
@@ -84,6 +84,42 @@ export function generateTableInterfaceOnly(
         ${members}
         }
     `
+}
+
+export function generateEnumManifest(enumObject: any, options: Options) {
+    const name =
+        typeof options.options.enumManifest === 'string'
+            ? options.options.enumManifest
+            : 'DBEnums'
+    let enumManifest = [`\nexport interface ${name} {`]
+    for (let enumNameRaw in enumObject) {
+        enumManifest.push(
+            `  ${options.transformTypeName(
+                enumNameRaw
+            )} :${options.transformTypeName(enumNameRaw)}`
+        )
+    }
+    return enumManifest.concat('}\n').join('\n')
+}
+
+export function generateTableManifest(tables: string[], optionsObj: Options) {
+    const { options } = optionsObj
+    const typeName =
+        typeof options.tableManifest === 'string'
+            ? options.tableManifest
+            : 'DBTables'
+
+    return [
+        `\nexport interface ${typeName} {`,
+        ...tables.map(
+            (t) =>
+                `  ${optionsObj.transformTypeName(t)}: ${normalizeName(
+                    optionsObj.transformTypeName(t),
+                    optionsObj
+                )}`
+        ),
+        `}\n`,
+    ].join('\n')
 }
 
 export function generateEnumType(enumObject: any, options: Options) {
@@ -108,7 +144,7 @@ export function generateTableTypes(
     let fields = ''
     Object.keys(tableDefinition)
         .sort()
-        .forEach(columnNameRaw => {
+        .forEach((columnNameRaw) => {
             let type = tableDefinition[columnNameRaw].tsType
             let nullable =
                 tableDefinition[columnNameRaw].nullable &&

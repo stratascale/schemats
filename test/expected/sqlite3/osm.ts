@@ -35,3 +35,7 @@ export interface users {
     text_col_nullable: usersFields.text_col_nullable
     varchar_col: usersFields.varchar_col
 }
+
+export interface DBTables {
+    users: users
+}

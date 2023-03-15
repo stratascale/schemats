@@ -137,3 +137,7 @@ export interface users {
     uuid_column: usersFields.uuid_column
     varchar_array_col: usersFields.varchar_array_col
 }
+
+export interface DBTables {
+    users: users
+}

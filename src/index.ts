@@ -8,6 +8,8 @@ import {
     generateTableTypes,
     generateTableInterface,
     generateTableInterfaceOnly,
+    generateEnumManifest,
+    generateTableManifest,
 } from './typescript'
 import { getDatabase, Database } from './schema'
 import Options, { OptionValues } from './options'
@@ -112,10 +114,8 @@ export async function typescriptOfSchema(
 
     const optionsObject = new Options(options)
 
-    const enumTypes = generateEnumType(
-        await db.getEnumTypes(schema),
-        optionsObject
-    )
+    const enums = await db.getEnumTypes(schema)
+    const enumTypes = generateEnumType(enums, optionsObject)
     const interfacePromises = tables.map((table) =>
         typescriptOfTable(db, table, schema as string, optionsObject)
     )
@@ -136,11 +136,27 @@ export async function typescriptOfSchema(
     output += enumTypes
     output += interfaces
 
+    if (optionsObject.options.tableManifest) {
+        output += generateTableManifest(tables, optionsObject)
+    }
+
+    if (optionsObject.options.enumManifest && enums.length) {
+        output += generateEnumManifest(enums, optionsObject)
+    }
+
+    if (optionsObject.options.customFooter) {
+        output += optionsObject.options.customFooter
+    }
+
     if (optionsObject.options.prettier) {
         try {
-            const prettier = await import('prettier')
+            const [prettier, parserTs] = await Promise.all([
+                import('prettier/standalone'),
+                import('prettier/parser-typescript'),
+            ])
             return prettier.format(output, {
                 parser: 'typescript',
+                plugins: [parserTs],
                 ...(optionsObject.options.prettierConfig || {}),
             })
         } catch (e) {

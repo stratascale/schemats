@@ -66,3 +66,7 @@ export interface Users {
     varbinaryCol: Buffer
     yearCol: number
 }
+
+export interface DBTables {
+    Users: Users
+}

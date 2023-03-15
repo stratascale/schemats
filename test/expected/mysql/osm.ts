@@ -152,3 +152,9 @@ export interface package_ {
     number: packageFields.number_
     string: packageFields.string_
 }
+
+export interface DBTables {
+    users: users
+    user_enums: user_enums
+    package: package_
+}
