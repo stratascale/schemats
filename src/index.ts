@@ -109,7 +109,9 @@ export async function typescriptOfSchema(
     }
 
     if (options.skipPrefix?.length) {
-        tables = tables.filter((t) => !options.skipPrefix?.includes(t))
+        tables = tables.filter(
+            (t) => !options.skipPrefix?.some((prefix) => t.startsWith(prefix))
+        )
     }
 
     const optionsObject = new Options(options)
