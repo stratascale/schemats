@@ -74,5 +74,5 @@ export interface Users {
 }
 
 export interface DBTables {
-    Users: Users
+    users: Users
 }

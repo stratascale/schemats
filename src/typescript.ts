@@ -113,7 +113,7 @@ export function generateTableManifest(tables: string[], optionsObj: Options) {
         `\nexport interface ${typeName} {`,
         ...tables.map(
             (t) =>
-                `  ${optionsObj.transformTypeName(t)}: ${normalizeName(
+                `  ${optionsObj.transformColumnName(t)}: ${normalizeName(
                     optionsObj.transformTypeName(t),
                     optionsObj
                 )}`
