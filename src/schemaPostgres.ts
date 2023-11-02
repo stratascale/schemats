@@ -23,20 +23,19 @@ export class PostgresDatabase implements Database {
     }
 
     private static mapTableDefinitionToType(
-        tableDefinition: TableDefinition,
+        table: TableDefinition,
         customTypes: string[],
         options: Options,
-        tableName: string
-    ): TableDefinition {
-        return transform(tableDefinition, (acc, column, columnName) => {
+    ): TableDefinition["columns"] {
+        return transform(table.columns, (acc, column, columnName) => {
             acc[columnName] = column
             if (
-                options.options.customTypes?.[tableName]?.[columnName] !==
+                options.options.customTypes?.[table.tableName]?.[columnName] !==
                 undefined
             ) {
                 column.tsCustomType = true
                 column.tsType =
-                    options.options.customTypes[tableName][columnName]
+                    options.options.customTypes[table.tableName][columnName]
                 return
             }
 
@@ -129,7 +128,7 @@ export class PostgresDatabase implements Database {
                         column.tsType = 'any'
                     }
             }
-        })
+        });
     }
 
     public query(queryString: string) {
@@ -160,8 +159,8 @@ export class PostgresDatabase implements Database {
         return enums
     }
 
-    public async getTableDefinition(tableName: string, tableSchema: string) {
-        let tableDefinition: TableDefinition = {}
+    public async loadTableColumns(table: TableDefinition) {
+        let tableDefinition: TableDefinition = { ...table }
         type T = {
             column_name: string
             udt_name: string
@@ -172,12 +171,13 @@ export class PostgresDatabase implements Database {
             'SELECT column_name, udt_name, is_nullable, column_default ' +
                 'FROM information_schema.columns ' +
                 'WHERE table_name = $1 and table_schema = $2',
-            [tableName, tableSchema],
+            [table.tableName, table.schemaName],
             (schemaItem: T) => {
-                tableDefinition[schemaItem.column_name] = {
+                tableDefinition.columns[schemaItem.column_name] = {
                     udtName: schemaItem.udt_name,
                     nullable: schemaItem.is_nullable === 'YES',
                     defaultValue: schemaItem.column_default,
+                    comment: "",
                 }
             }
         )
@@ -185,28 +185,33 @@ export class PostgresDatabase implements Database {
     }
 
     public async getTableTypes(
-        tableName: string,
-        tableSchema: string,
+        table: TableDefinition,
         options: Options
     ) {
         let enumTypes = await this.getEnumTypes()
         let customTypes = keys(enumTypes)
         return PostgresDatabase.mapTableDefinitionToType(
-            await this.getTableDefinition(tableName, tableSchema),
+            await this.loadTableColumns(table),
             customTypes.sort(),
             options,
-            tableName
         )
     }
 
-    public async getSchemaTables(schemaName: string): Promise<string[]> {
-        const schemaTables = await this.db.map<string>(
+    public async getSchemaTables(schemaName: string): Promise<TableDefinition[]> {
+        const schemaTables = await this.db.map<TableDefinition>(
             'SELECT table_name ' +
                 'FROM information_schema.columns ' +
                 'WHERE table_schema = $1 ' +
                 'GROUP BY table_name',
             [schemaName],
-            (schemaItem: { table_name: string }) => schemaItem.table_name
+            (schemaItem: { table_name: string }) => {
+                return {
+                    schemaName,
+                    tableName: schemaItem.table_name,
+                    comment: "",
+                    columns: {},
+                };
+            }
         )
 
         return schemaTables?.sort()

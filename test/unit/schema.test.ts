@@ -14,7 +14,7 @@ describe('Schema', () => {
             }
         })
         it('mysql connection', () => {
-            const db = getDatabase('mysql://user:password@localhost/test')
+            const db = getDatabase(process.env.DB_URL ?? 'mysql://user:password@localhost/test')
             assert.equal(db.constructor.name, 'MysqlDatabase')
         })
         it('postgres connection', () => {

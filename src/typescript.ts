@@ -35,16 +35,15 @@ function colon(def: ColumnDefinition, options: Options) {
 }
 
 export function generateTableInterface(
-    tableNameRaw: string,
-    tableDefinition: TableDefinition,
+    table: TableDefinition,
     options: Options
 ) {
-    const tableName = options.transformTypeName(tableNameRaw)
+    const tableName = options.transformTypeName(table.tableName)
     let members = ''
-    Object.keys(tableDefinition)
+    Object.keys(table.columns)
         .sort()
         .forEach((c) => {
-            const d = tableDefinition[c]
+            const d = table.columns[c]
             const columnName = options.transformColumnName(c)
             members += `${columnName}${colon(
                 d,
@@ -60,30 +59,30 @@ export function generateTableInterface(
 }
 
 export function generateTableInterfaceOnly(
-    tableNameRaw: string,
-    tableDefinition: TableDefinition,
+    table: TableDefinition,
     options: Options
 ) {
-    const tableName = options.transformTypeName(tableNameRaw)
-    let members = ''
-    Object.keys(tableDefinition)
+    const tableName = options.transformTypeName(table.tableName)
+    const list = [''] as string[];
+    if (options.options.addComments) {
+        list.push(`/** ${table.comment} */`);
+    }
+    list.push(`export interface ${normalizeName(tableName, options)} {`);
+    Object.keys(table.columns)
         .sort()
         .forEach((columnNameRaw) => {
-            const def = tableDefinition[columnNameRaw]
+            const def = table.columns[columnNameRaw]
             const type = def.tsType
             const nullable = def.nullable && !def.tsCustomType ? '| null' : ''
             const columnName = options.transformColumnName(columnNameRaw)
-            members += `${columnName}${colon(
-                def,
-                options
-            )}${type}${nullable};\n`
+            if (options.options.addComments) {
+                list.push(`  /** ${def.comment} */`);
+            }
+            list.push(`  ${columnName}${colon(def, options)}${type}${nullable};`);
         })
-
-    return `
-        export interface ${normalizeName(tableName, options)} {
-        ${members}
-        }
-    `
+    list.push('}');
+    list.push('');
+    return list.join("\n");
 }
 
 export function generateEnumManifest(enumObject: any, options: Options) {
@@ -136,19 +135,18 @@ export function generateEnumType(enumObject: any, options: Options) {
 }
 
 export function generateTableTypes(
-    tableNameRaw: string,
-    tableDefinition: TableDefinition,
+    table: TableDefinition,
     options: Options
 ) {
-    const tableName = options.transformTypeName(tableNameRaw)
+    const tableName = options.transformTypeName(table.tableName)
     let fields = ''
-    Object.keys(tableDefinition)
+    Object.keys(table.columns)
         .sort()
         .forEach((columnNameRaw) => {
-            let type = tableDefinition[columnNameRaw].tsType
+            let type = table.columns[columnNameRaw].tsType
             let nullable =
-                tableDefinition[columnNameRaw].nullable &&
-                !tableDefinition[columnNameRaw].tsCustomType
+                table.columns[columnNameRaw].nullable &&
+                !table.columns[columnNameRaw].tsCustomType
                     ? '| null'
                     : ''
             const columnName = options.transformColumnName(columnNameRaw)

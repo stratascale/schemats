@@ -1,7 +1,6 @@
 import { Database } from './schemaInterfaces'
 import { PostgresDatabase } from './schemaPostgres'
 import { MysqlDatabase } from './schemaMysql'
-import { ClickHouseDatabase } from './schemaClickhouse'
 import type { OptionValues } from '.'
 import { Sqlite3Database } from './schemaSqlite3'
 
@@ -33,8 +32,6 @@ export function getDatabase(connection: string, options: OptionValues = {}): Dat
             return new MysqlDatabase(connection)
         case SQLVersion.POSTGRES:
             return new PostgresDatabase(connection)
-        case SQLVersion.CLICKHOUSE:
-            return new ClickHouseDatabase(connection)
         default:
             throw new Error(
                 `SQL version unsupported in connection: ${connection}`

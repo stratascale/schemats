@@ -9,6 +9,7 @@ import * as fs from 'fs'
 import { typescriptOfSchema } from '../src/index'
 
 interface SchematsConfig {
+    addComments: boolean
     conn: string
     table: string[] | string
     schema: string
@@ -58,6 +59,9 @@ let argv: SchematsConfig = yargs
     .alias('C', 'camelCase')
     .describe('C', 'Camel-case columns')
     .describe('noHeader', 'Do not write header')
+    .describe('a', 'Include database comments in generated interface')
+    .alias('a', 'addComments')
+    .nargs('a', 0)
     .demand('o')
     .nargs('o', 1)
     .alias('o', 'output')
@@ -92,6 +96,7 @@ let argv: SchematsConfig = yargs
             argv.table,
             argv.schema,
             {
+                addComments: argv.addComments,
                 prettier: argv.prettier,
                 prettierConfig: argv.prettierConfig,
                 customHeader: argv.customHeader,
