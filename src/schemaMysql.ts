@@ -1,15 +1,16 @@
-import type * as mysql from 'mysql'
-import { mapValues, keys, isEqual } from 'lodash'
-import { parse as urlParse } from 'url'
-import { TableDefinition, Database } from './schemaInterfaces'
-import Options from './options'
+import { createConnection, Connection } from 'mysql';
+import { mapValues, keys, isEqual } from 'lodash';
+import { parse as urlParse } from 'url';
+import { TableDefinition, Database } from './schemaInterfaces';
+import Options from './options';
 
 export class MysqlDatabase implements Database {
-    private db: mysql.Connection
+    private db: Connection
     private defaultSchema: string
 
     constructor(public connectionString: string) {
         let mysql: typeof import('mysql')
+        /*
         try {
             mysql = require('mysql') as typeof import('mysql')
         } catch {
@@ -17,7 +18,8 @@ export class MysqlDatabase implements Database {
                 'mysql is required as a peer dependency of schemats'
             )
         }
-        this.db = mysql.createConnection(connectionString)
+        */
+        this.db = createConnection(connectionString)
         let url = urlParse(connectionString, true)
         if (url && url.pathname) {
             let database = url.pathname.substr(1)
@@ -230,9 +232,9 @@ export class MysqlDatabase implements Database {
         const schemaTables = await this.queryAsync(
             'SELECT table_name as `table_name` ' +
                 ', table_schema as `table_schema`, table_comment as `table_comment` ' +
-                'FROM information_schema.columns ' +
+                'FROM information_schema.tables ' +
                 'WHERE table_schema = ? ' +
-                'GROUP BY table_name',
+                'ORDER BY 1',
             [schemaName]
         )
         return schemaTables
@@ -243,8 +245,7 @@ export class MysqlDatabase implements Database {
                     comment: schemaItem.table_comment ?? "",
                     columns: {}
                 }
-            })
-            .sort()
+            });
     }
 
     public queryAsync(

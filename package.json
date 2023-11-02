@@ -20,7 +20,8 @@
         "coverage:ci": "npm run lint && npm run build && nyc mocha && nyc report --reporter=text-lcov"
     },
     "bin": {
-        "schemats": "bin/schemats.js"
+        "schemats": "bin/schemats.js",
+        "shi-schemats": "bin/shi-schemats"
     },
     "repository": {
         "type": "git",

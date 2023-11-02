@@ -63,7 +63,11 @@ export function generateTableInterfaceOnly(
     options: Options
 ) {
     const tableName = options.transformTypeName(table.tableName)
-    let members = ''
+    const list = [''] as string[];
+    if (options.options.addComments) {
+        list.push(`/** ${table.comment} */`);
+    }
+    list.push(`export interface ${normalizeName(tableName, options)} {`);
     Object.keys(table.columns)
         .sort()
         .forEach((columnNameRaw) => {
@@ -71,17 +75,14 @@ export function generateTableInterfaceOnly(
             const type = def.tsType
             const nullable = def.nullable && !def.tsCustomType ? '| null' : ''
             const columnName = options.transformColumnName(columnNameRaw)
-            members += `${columnName}${colon(
-                def,
-                options
-            )}${type}${nullable};\n`
+            if (options.options.addComments) {
+                list.push(`  /** ${def.comment} */`);
+            }
+            list.push(`  ${columnName}${colon(def, options)}${type}${nullable};`);
         })
-
-    return `
-        export interface ${normalizeName(tableName, options)} {
-        ${members}
-        }
-    `
+    list.push('}');
+    list.push('');
+    return list.join("\n");
 }
 
 export function generateEnumManifest(enumObject: any, options: Options) {

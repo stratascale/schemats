@@ -37,8 +37,12 @@ describe('index', () => {
             dbReflection.getTableTypes.returns(Promise.resolve('tableTypes'))
             await Index.typescriptOfTable(
                 db,
-                'tableName',
-                'schemaName',
+                {
+                    tableName: 'tableName',
+                    schemaName: 'schemaName',
+                    columns: {},
+                    comment: ""
+                },
                 new Options({ tableNamespaces: true })
             )
             const expected = {
@@ -72,8 +76,12 @@ describe('index', () => {
             )
             const typescriptString = await Index.typescriptOfTable(
                 db,
-                'tableName',
-                'schemaName',
+                {
+                    tableName: 'tableName',
+                    schemaName: 'schemaName',
+                    columns: {},
+                    comment: ""
+                },
                 new Options({ tableNamespaces: true })
             )
             assert.equal(
@@ -84,7 +92,12 @@ describe('index', () => {
     })
     describe('typescriptOfSchema', () => {
         it('has schema', async () => {
-            dbReflection.getSchemaTables.returns(Promise.resolve(['tablename']))
+            dbReflection.getSchemaTables.returns(Promise.resolve([{
+                tableName: 'tablename',
+                schema: '',
+                columns: {},
+                comment: '',
+            }]));
             dbReflection.getEnumTypes.returns(Promise.resolve('enumTypes'))
             tsReflection.generateTableTypes.returns('generatedTableTypes\n')
             tsReflection.generateEnumType.returns('generatedEnumTypes\n')
@@ -116,7 +129,12 @@ describe('index', () => {
             */
         })
         it('has tables provided', async () => {
-            dbReflection.getSchemaTables.returns(Promise.resolve(['tablename']))
+            dbReflection.getSchemaTables.returns(Promise.resolve([{
+                tableName: 'tablename',
+                schemaName: '',
+                columns: {},
+                comment: "",
+            }]));
             dbReflection.getEnumTypes.returns(Promise.resolve('enumTypes'))
             tsReflection.generateTableTypes.returns('generatedTableTypes\n')
             tsReflection.generateEnumType.returns('generatedEnumTypes\n')
@@ -137,7 +155,7 @@ describe('index', () => {
                 {
                     columns: undefined,
                     comment: '',
-                    schemaName: undefined,
+                    schemaName: '',
                     tableName: 'differentTablename',
                 }
             )

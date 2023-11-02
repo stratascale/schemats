@@ -2,6 +2,7 @@ import { camelCase, upperFirst } from 'lodash'
 import { ParserOptions } from 'prettier'
 
 const DEFAULT_OPTIONS: OptionValues = {
+    addComments: false,
     prettier: true,
     writeHeader: true,
     camelCase: false,
@@ -14,6 +15,7 @@ const DEFAULT_OPTIONS: OptionValues = {
 }
 
 export type OptionValues = {
+    addComments?: boolean
     sqlite3?: boolean
     prettier?: boolean
     prettierConfig?: ParserOptions

@@ -329,9 +329,9 @@ describe('MysqlDatabase', () => {
                 [
                     'SELECT table_name as `table_name` ' +
                         ', table_schema as `table_schema`, table_comment as `table_comment` ' +
-                        'FROM information_schema.columns ' +
+                        'FROM information_schema.tables ' +
                         'WHERE table_schema = ? ' +
-                        'GROUP BY table_name',
+                        'ORDER BY 1',
                     ['testschema'],
                 ]
             )
