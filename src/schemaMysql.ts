@@ -5,7 +5,7 @@ import { TableDefinition, Database } from './schemaInterfaces'
 import Options from './options'
 
 export class MysqlDatabase implements Database {
-    private db: mysql.IConnection
+    private db: mysql.Connection
     private defaultSchema: string
 
     constructor(public connectionString: string) {
@@ -29,20 +29,19 @@ export class MysqlDatabase implements Database {
 
     // uses the type mappings from https://github.com/mysqljs/ where sensible
     private static mapTableDefinitionToType(
-        tableDefinition: TableDefinition,
+        table: TableDefinition,
         customTypes: string[],
-        options: Options,
-        tableName: string
-    ): TableDefinition {
+        options: Options
+    ): TableDefinition["columns"] {
         if (!options) throw new Error()
-        return mapValues(tableDefinition, (column, columnName) => {
+        return mapValues(table.columns, (column, columnName) => {
             if (
-                options.options.customTypes?.[tableName]?.[columnName] !==
+                options.options.customTypes?.[table.tableName]?.[columnName] !==
                 undefined
             ) {
                 column.tsCustomType = true
                 column.tsType =
-                    options.options.customTypes[tableName][columnName]
+                    options.options.customTypes[table.tableName][columnName]
                 return column
             }
 
@@ -115,7 +114,7 @@ export class MysqlDatabase implements Database {
                         return column
                     }
             }
-        })
+        });
     }
 
     private static parseMysqlEnumeration(mysqlEnum: string): string[] {
@@ -145,7 +144,8 @@ export class MysqlDatabase implements Database {
             params = []
         }
         const rawEnumRecords = await this.queryAsync(
-            'SELECT column_name as `column_name`, column_type as `column_type`, data_type as `data_type`' +
+            'SELECT column_name as `column_name`, column_type as `column_type`, data_type as `data_type` ' +
+                ', column_comment as `column_comment` ' +
                 'FROM information_schema.columns ' +
                 `WHERE data_type IN ('enum', 'set') ${enumSchemaWhereClause}`,
             params
@@ -177,14 +177,15 @@ export class MysqlDatabase implements Database {
         return enums
     }
 
-    public async getTableDefinition(tableName: string, tableSchema: string) {
-        let tableDefinition: TableDefinition = {}
+    public async loadTableColumns(table: TableDefinition) {
+        let tableDefinition: TableDefinition = { ...table }
 
         const tableColumns = await this.queryAsync(
             'SELECT column_name as `column_name`, data_type as `data_type`, is_nullable as `is_nullable`, column_default as `column_default` ' +
+                ', column_comment as `column_comment` ' +
                 'FROM information_schema.columns ' +
                 'WHERE table_name = ? and table_schema = ?',
-            [tableName, tableSchema]
+            [table.tableName, table.schemaName]
         )
         tableColumns.map(
             (schemaItem: {
@@ -192,10 +193,11 @@ export class MysqlDatabase implements Database {
                 data_type: string
                 is_nullable: string
                 column_default: string | null
+                column_comment: string
             }) => {
                 const columnName = schemaItem.column_name
                 const dataType = schemaItem.data_type
-                tableDefinition[columnName] = {
+                tableDefinition.columns[columnName] = {
                     udtName: /^(enum|set)$/i.test(dataType)
                         ? MysqlDatabase.getEnumNameFromColumn(
                               dataType,
@@ -204,6 +206,7 @@ export class MysqlDatabase implements Database {
                         : dataType,
                     nullable: schemaItem.is_nullable === 'YES',
                     defaultValue: schemaItem.column_default,
+                    comment: schemaItem.column_comment ?? "",
                 }
             }
         )
@@ -211,30 +214,36 @@ export class MysqlDatabase implements Database {
     }
 
     public async getTableTypes(
-        tableName: string,
-        tableSchema: string,
+        table: TableDefinition,
         options: Options
     ) {
-        const enumTypes: any = await this.getEnumTypes(tableSchema)
+        const enumTypes: any = await this.getEnumTypes(table.schemaName)
         let customTypes = keys(enumTypes)
         return MysqlDatabase.mapTableDefinitionToType(
-            await this.getTableDefinition(tableName, tableSchema),
+            await this.loadTableColumns(table),
             customTypes,
             options,
-            tableName
         )
     }
 
-    public async getSchemaTables(schemaName: string): Promise<string[]> {
+    public async getSchemaTables(schemaName: string): Promise<TableDefinition[]> {
         const schemaTables = await this.queryAsync(
             'SELECT table_name as `table_name` ' +
+                ', table_schema as `table_schema`, table_comment as `table_comment` ' +
                 'FROM information_schema.columns ' +
                 'WHERE table_schema = ? ' +
                 'GROUP BY table_name',
             [schemaName]
         )
         return schemaTables
-            .map((schemaItem: { table_name: string }) => schemaItem.table_name)
+            .map((schemaItem: { table_schema: string, table_name: string, table_comment: string }) => {
+                return {
+                    schemaName: schemaItem.table_schema,
+                    tableName: schemaItem.table_name,
+                    comment: schemaItem.table_comment ?? "",
+                    columns: {}
+                }
+            })
             .sort()
     }
 
@@ -246,11 +255,11 @@ export class MysqlDatabase implements Database {
             this.db.query(
                 queryString,
                 escapedValues,
-                (error: Error, results: Array<Object>) => {
+                (error, results) => {
                     if (error) {
                         return reject(error)
                     }
-                    return resolve(results)
+                    return resolve(results as Object[])
                 }
             )
         })

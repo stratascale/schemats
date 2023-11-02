@@ -27,21 +27,20 @@ export class Sqlite3Database implements Database {
 
     // uses the type mappings from https://github.com/mysqljs/ where sensible
     private static mapTableDefinitionToType(
-        tableDefinition: TableDefinition,
+        table: TableDefinition,
         options: Options,
-        tableName: string
-    ): TableDefinition {
+    ): TableDefinition["columns"] {
         if (!options) throw new Error()
-        return transform(tableDefinition, (acc, column, columnName) => {
+        return transform(table.columns, (acc, column, columnName) => {
             acc[columnName] = column
             const type = column.udtName.toUpperCase()
             if (
-                options.options.customTypes?.[tableName]?.[columnName] !==
+                options.options.customTypes?.[table.tableName]?.[columnName] !==
                 undefined
             ) {
                 column.tsCustomType = true
                 column.tsType =
-                    options.options.customTypes[tableName][columnName]
+                    options.options.customTypes[table.tableName][columnName]
                 return
             }
 
@@ -64,17 +63,17 @@ export class Sqlite3Database implements Database {
             } else {
                 column.tsType = 'numeric'
             }
-        })
+        });
     }
 
     public async getEnumTypes(schema?: string) {
         //
     }
 
-    public async getTableDefinition(tableName: string, tableSchema: string) {
-        let tableDefinition: TableDefinition = {}
+    public async loadTableColumns(table: TableDefinition) {
+        let tableDefinition: TableDefinition = {...table}
 
-        const tableColumns = await this.db.pragma(`table_info(${tableName})`)
+        const tableColumns = await this.db.pragma(`table_info(${table.tableName})`)
 
         tableColumns.map(
             (schemaItem: {
@@ -88,16 +87,17 @@ export class Sqlite3Database implements Database {
                 const columnName = schemaItem.name
                 let defaultValue = schemaItem.dflt_value
                 if (
-                    this.increments[tableName] === `"${schemaItem.name}"` ||
-                    this.increments[tableName] === `\`${schemaItem.name}\``
+                    this.increments[table.tableName] === `"${schemaItem.name}"` ||
+                    this.increments[table.tableName] === `\`${schemaItem.name}\``
                 ) {
                     defaultValue = ':autoincrement:'
                 }
 
-                tableDefinition[columnName] = {
+                tableDefinition.columns[columnName] = {
                     udtName: schemaItem.type,
                     nullable: schemaItem.notnull === 0,
                     defaultValue,
+                    comment: ""
                 }
             }
         )
@@ -105,23 +105,28 @@ export class Sqlite3Database implements Database {
     }
 
     public async getTableTypes(
-        tableName: string,
-        tableSchema: string = '',
+        table: TableDefinition,
         options: Options
     ) {
         return Sqlite3Database.mapTableDefinitionToType(
-            await this.getTableDefinition(tableName, tableSchema),
+            await this.loadTableColumns(table),
             options,
-            tableName
         )
     }
 
-    public async getSchemaTables(): Promise<string[]> {
+    public async getSchemaTables(): Promise<TableDefinition[]> {
         const schemaTables = this.db
             .prepare('SELECT name FROM sqlite_master WHERE type = ?')
             .all('table')
         return schemaTables
-            .map((schemaItem: { name: string }) => schemaItem.name)
+            .map((schemaItem: { name: string }) => {
+                return {
+                    columns: {},
+                    tableName: schemaItem.name,
+                    schemaName: "",
+                    comment: ""
+                }
+            })
             .sort()
     }
 

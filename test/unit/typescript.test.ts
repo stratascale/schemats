@@ -1,13 +1,31 @@
 import * as assert from 'assert'
 import * as Typescript from '../../src/typescript'
 import Options from '../../src/options'
+import { TableDefinition } from '../../src/schemaInterfaces';
 
 const options = new Options({})
+
+
+function tableDef(tableName: string, partial: { [name: string]: Omit<TableDefinition["columns"][0], "comment">}): TableDefinition {
+    const columns: TableDefinition["columns"] = {};
+    for (const key in partial) {
+        columns[key] = {
+            comment: "",
+            ...partial[key],
+        }
+    }
+    return {
+        tableName,
+        schemaName: "",
+        columns,
+        comment: "",
+    }
+}
 
 describe('Typescript', () => {
     describe('generateTableInterface', () => {
         it('empty table definition object', () => {
-            const tableInterface = Typescript.generateTableInterface('tableName', {}, options)
+            const tableInterface = Typescript.generateTableInterface(tableDef('tableName', {}), options)
             assert.equal(tableInterface,
                 '\n' +
                 '        export interface tableName {\n' +
@@ -16,7 +34,7 @@ describe('Typescript', () => {
                 '    ')
         })
         it('table name is reserved', () => {
-            const tableInterface = Typescript.generateTableInterface('package', {}, options)
+            const tableInterface = Typescript.generateTableInterface(tableDef('package', {}), options)
             assert.equal(tableInterface,
                 '\n' +
                 '        export interface package_ {\n' +
@@ -25,10 +43,10 @@ describe('Typescript', () => {
                 '    ')
         })
         it('table with columns', () => {
-            const tableInterface = Typescript.generateTableInterface('tableName', {
+            const tableInterface = Typescript.generateTableInterface(tableDef('tableName', {
                 col1: {udtName: 'name1', nullable: false, defaultValue: null},
                 col2: {udtName: 'name2', nullable: false, defaultValue: null}
-            }, options)
+            }), options)
             assert.equal(tableInterface,
                 '\n' +
                 '        export interface tableName {\n' +
@@ -39,11 +57,11 @@ describe('Typescript', () => {
                 '    ')
         })
         it('table with reserved columns', () => {
-            const tableInterface = Typescript.generateTableInterface('tableName', {
+            const tableInterface = Typescript.generateTableInterface(tableDef('tableName', {
                 string: {udtName: 'name1', nullable: false, defaultValue: null},
                 number: {udtName: 'name2', nullable: false, defaultValue: null},
                 package: {udtName: 'name3', nullable: false, defaultValue: null}
-            }, options)
+            }), options)
             assert.equal(tableInterface,
                 '\n' +
                 '        export interface tableName {\n' +
@@ -87,7 +105,7 @@ describe('Typescript', () => {
     })
     describe('generateTableTypes', () => {
         it('empty table definition object', () => {
-            const tableTypes = Typescript.generateTableTypes('tableName',{}, options)
+            const tableTypes = Typescript.generateTableTypes(tableDef('tableName', {}), options)
             assert.equal(tableTypes,
                 '\n' +
                 '        export namespace tableNameFields {' +
@@ -97,10 +115,10 @@ describe('Typescript', () => {
                 '\n    ')
         })
         it('with table definitions', () => {
-            const tableTypes = Typescript.generateTableTypes('tableName', {
+            const tableTypes = Typescript.generateTableTypes(tableDef('tableName', {
                 col1: {udtName: 'name1', nullable: false, tsType: 'string', defaultValue: ''},
                 col2: {udtName: 'name2', nullable: false, tsType: 'number', defaultValue: '0'}
-            }, options)
+            }), options)
             assert.equal(tableTypes,
                 '\n' +
                 '        export namespace tableNameFields {' +
@@ -111,10 +129,10 @@ describe('Typescript', () => {
                 '\n    ')
         })
         it('with nullable column definitions', () => {
-            const tableTypes = Typescript.generateTableTypes('tableName', {
+            const tableTypes = Typescript.generateTableTypes(tableDef('tableName', {
                 col1: {udtName: 'name1', nullable: true, tsType: 'string', defaultValue: ''},
                 col2: {udtName: 'name2', nullable: true, tsType: 'number', defaultValue: '0'}
-            }, options)
+            }), options)
             assert.equal(tableTypes,
                 '\n' +
                 '        export namespace tableNameFields {' +

@@ -7,10 +7,14 @@ export interface ColumnDefinition {
     tsType?: string
     tsCustomType?: boolean
     rawType?: string
+    comment: string
 }
 
 export interface TableDefinition {
-    [columnName: string]: ColumnDefinition
+    schemaName: string
+    tableName: string
+    comment: string
+    columns: { [columnName: string]: ColumnDefinition }
 }
 
 export interface Database {
@@ -18,14 +22,12 @@ export interface Database {
     query(queryString: string): Promise<Object[]>
     getDefaultSchema(): string
     getEnumTypes(schema?: string): any
-    getTableDefinition(
-        tableName: string,
-        tableSchema: string
+    loadTableColumns(
+        table: TableDefinition
     ): Promise<TableDefinition>
     getTableTypes(
-        tableName: string,
-        tableSchema: string,
+        table: TableDefinition,
         options: Options
-    ): Promise<TableDefinition>
-    getSchemaTables(schemaName: string): Promise<string[]>
+    ): Promise<TableDefinition["columns"]>
+    getSchemaTables(schemaName: string): Promise<TableDefinition[]>
 }

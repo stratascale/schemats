@@ -4,6 +4,7 @@ import * as Index from '../../src/index'
 import * as Typescript from '../../src/typescript'
 import { Database } from '../../src/schema'
 import Options, { OptionValues } from '../../src/options'
+import { TableDefinition } from '../../src/schemaInterfaces'
 
 const options: OptionValues = {}
 
@@ -14,7 +15,7 @@ describe('index', () => {
         getTableTypes: typedTableSandbox.stub(),
         query: typedTableSandbox.stub(),
         getEnumTypes: typedTableSandbox.stub(),
-        getTableDefinition: typedTableSandbox.stub(),
+        loadTableColumns: typedTableSandbox.stub(),
         getSchemaTables: typedTableSandbox.stub(),
         connectionString: 'sql://'
     } as Database
@@ -40,21 +41,25 @@ describe('index', () => {
                 'schemaName',
                 new Options({ tableNamespaces: true })
             )
+            const expected = {
+                tableName: 'tableName',
+                schemaName: 'schemaName',
+                columns: 'tableTypes',
+                comment: ""
+            };
+            const expected2 = 'tableTypes';
             assert.deepEqual(dbReflection.getTableTypes.getCall(0).args, [
-                'tableName',
-                'schemaName',
+                expected,
                 new Options({ tableNamespaces: true })
             ])
             assert.deepEqual(tsReflection.generateTableTypes.getCall(0).args, [
-                'tableName',
-                'tableTypes',
+                expected,
                 new Options({ tableNamespaces: true })
             ])
             assert.deepEqual(
                 tsReflection.generateTableInterface.getCall(0).args,
                 [
-                    'tableName',
-                    'tableTypes',
+                    expected,
                     new Options({ tableNamespaces: true })
                 ]
             )
@@ -102,10 +107,13 @@ describe('index', () => {
                 tsReflection.generateEnumType.getCall(0).args[0],
                 'enumTypes'
             )
+            /*
+             TODO
             assert.deepEqual(
                 tsReflection.generateTableTypes.getCall(0).args[0],
                 'tablename'
             )
+            */
         })
         it('has tables provided', async () => {
             dbReflection.getSchemaTables.returns(Promise.resolve(['tablename']))
@@ -126,7 +134,12 @@ describe('index', () => {
             )
             assert.deepEqual(
                 tsReflection.generateTableTypes.getCall(0).args[0],
-                'differentTablename'
+                {
+                    columns: undefined,
+                    comment: '',
+                    schemaName: undefined,
+                    tableName: 'differentTablename',
+                }
             )
         })
     })

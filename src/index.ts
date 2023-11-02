@@ -13,6 +13,7 @@ import {
 } from './typescript'
 import { getDatabase, Database } from './schema'
 import Options, { OptionValues } from './options'
+import { TableDefinition } from './schemaInterfaces'
 const pkgVersion = require('../package.json').version
 
 function getTime() {
@@ -65,21 +66,26 @@ export async function typescriptOfTable(
     table: string,
     schema: string,
     optionsObject: Options
-) {
+): Promise<string> {
     if (typeof db === 'string') {
         db = getDatabase(db, optionsObject.options)
     }
 
+    let tableDef: TableDefinition = {
+        tableName: table,
+        schemaName: schema,
+        columns: {},
+        comment: ""
+    }
     let interfaces = ''
-    let tableTypes = await db.getTableTypes(table, schema, optionsObject)
+    tableDef.columns = await db.getTableTypes(tableDef, optionsObject)
 
     if (optionsObject.options.tableNamespaces) {
-        interfaces += generateTableTypes(table, tableTypes, optionsObject)
-        interfaces += generateTableInterface(table, tableTypes, optionsObject)
+        interfaces += generateTableTypes(tableDef, optionsObject)
+        interfaces += generateTableInterface(tableDef, optionsObject)
     } else {
         interfaces += generateTableInterfaceOnly(
-            table,
-            tableTypes,
+            tableDef,
             optionsObject
         )
     }
@@ -100,8 +106,18 @@ export async function typescriptOfSchema(
         schema = db.getDefaultSchema()
     }
 
+    const tableDefs = [] as TableDefinition[];
     if (tables.length === 0) {
-        tables = await db.getSchemaTables(schema)
+        tableDefs.push(...await db.getSchemaTables(schema));
+    } else {
+        tableDefs.push(...tables.map((name): TableDefinition => {
+            return {
+                tableName: name,
+                schemaName: schema ?? "",
+                columns: {},
+                comment: "",
+            }
+        }));
     }
 
     if (options.skipTables?.length) {
